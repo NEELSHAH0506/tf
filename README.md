@@ -58,3 +58,5 @@ S3 bucket is used to store terraform state file to enable secure storage and col
 It is important that no 2 terraform tasks are changing the state at the same time. For that we can enable
 state locking using a DynamoDB table.
 - [More one S3 backend configuration](https://developer.hashicorp.com/terraform/language/settings/backends/s3)
+
+To create backend for terraform apply the [**tf-backend**](./tf-backend) module.
