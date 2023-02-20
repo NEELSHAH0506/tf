@@ -20,11 +20,14 @@ Add the backend configuration block to terraform configuration at [backend.tf](.
 ```terraform
 terraform {
   backend "s3" {
-    encrypt        = true
-    bucket         = "<bucket name>"
-    region         = "<aws region>"
-    key            = "<kms key name or alias>"
-    dynamodb_table = "<dynamodb table name>"
+    bucket  = "<bucket name>"
+    region  = "<bucket region>"
+    key     = "<file path>"
+
+    encrypt         = true
+    kms_key_id      = "<kms key name or alias>"
+
+    dynamodb_table  = "<dynamodb lock table name>"
   }
 }
 ```
