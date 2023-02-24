@@ -49,6 +49,43 @@ module "ecs" {
 
   tags = local.tags
 }
+
+/* --- Codepipeline --- */
+module "codepipeline" {
+  source = "./../modules/aws-codepipeline-github"
+
+  name = "${var.environment}-${var.app_name}"
+  codepipeline_role_arn = "arn:aws:iam::743962360454:role/service-role/AWSCodePipelineServiceRole-eu-west-2-xpreproductionT2build"
+
+  artifact_store_type     = "S3"
+  artifact_store_location = "codepipeline-eu-west-2-637163243721"
+
+  full_repository_id = "NEELSHAH0506/Intrro-xBackend"
+  branch_name = "develop"
+
+  stages = [
+    {
+      name = "Build",
+      category = "Build",
+      owner = "AWS",
+      provider = "CodeBuild",
+      input_artifacts = "SourceOutput",
+      output_artifacts = "BuildArtifact"
+    },
+    {
+      name = "DeployECS",
+      category = "Deploy",
+      owner = "AWS",
+      provider = "ECS",
+      input_artifacts = "BuildArtifact",
+      output_artifacts = null
+      ecs_cluster_name = module.ecs.ecs_cluster_name
+      ecs_service_name = "${var.environment}-${var.app_name}-api"
+    }
+  ]
+}
+
+
 /* --- ASG Security Group --- */
 
 resource "aws_security_group" "ecs_sg" {
