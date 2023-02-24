@@ -38,6 +38,11 @@ module "asg" {
   lc_name   = "${var.cluster_name}_lc"
   use_lc    = true
   create_lc = var.create_asg
+  metadata_options = {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+  }
 
   image_id                 = data.aws_ami.amazon_ecs_hvm.id
   instance_type            = var.instance_type
