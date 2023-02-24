@@ -16,6 +16,39 @@ data "aws_subnets" "vpc_subnets" {
   }
 }
 
+/* --- ASG provider for ECS --- */
+
+module "ecs_asg_provider" {
+  source = "./../modules/aws-ecs-asg-provider"
+
+  cluster_name  = local.ecs_cluster_name
+  instance_type = var.asg_instance_type
+
+  min_size          = var.asg_min_size
+  max_size          = var.asg_max_size
+  desired_capacity  = var.asg_desired_capacity
+
+  security_groups = [aws_security_group.ecs_sg.id]
+  subnet_ids      = data.aws_subnets.vpc_subnets.ids
+
+  tags = local.tags
+}
+
+/* --- ECS Cluster --- */
+module "ecs" {
+  source = "./../modules/aws-ecs"
+
+  name = local.ecs_cluster_name
+  capacity_providers = [
+    module.ecs_asg_provider.ecs_capacity_provider_name
+  ]
+  default_capacity_provider_strategy = [{
+    capacity_provider = module.ecs_asg_provider.ecs_capacity_provider_name
+    weight            = "1"
+  }]
+
+  tags = local.tags
+}
 /* --- ASG Security Group --- */
 
 resource "aws_security_group" "ecs_sg" {
@@ -26,7 +59,7 @@ resource "aws_security_group" "ecs_sg" {
   tags = local.tags
 }
 
-resource "aws_security_group_rule" "ecs_sg" {
+resource "aws_security_group_rule" "public_out" {
   security_group_id = aws_security_group.ecs_sg.id
 
   type              = "egress"
@@ -58,38 +91,3 @@ resource "aws_security_group_rule" "public_in_https" {
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
-/* --- ASG provider for ECS --- */
-
-module "ecs_asg_provider" {
-  source = "./../modules/aws-ecs-asg-provider"
-  create_asg = false
-
-  cluster_name  = local.ecs_cluster_name
-  instance_type = var.asg_instance_type
-
-  min_size          = var.asg_min_size
-  max_size          = var.asg_max_size
-  desired_capacity  = var.asg_desired_capacity
-
-  security_groups = [aws_security_group.ecs_sg.id]
-  subnet_ids      = data.aws_subnets.vpc_subnets.ids
-
-  tags = local.tags
-}
-
-/* --- ECS Cluster --- */
-module "ecs" {
-  source = "./../modules/aws-ecs"
-  create_ecs = false
-
-  name = local.ecs_cluster_name
-  capacity_providers = [
-    module.ecs_asg_provider.ecs_capacity_provider_name
-  ]
-  default_capacity_provider_strategy = [{
-    capacity_provider = module.ecs_asg_provider.ecs_capacity_provider_name
-    weight            = "1"
-  }]
-
-  tags = local.tags
-}
